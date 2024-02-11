@@ -24,6 +24,8 @@
           <li><a href="#qesap_get_variables">qesap_get_variables</a></li>
           <li><a href="#qesap_create_ansible_section">qesap_create_ansible_section</a></li>
           <li><a href="#qesap_venv_cmd_exec">qesap_venv_cmd_exec</a></li>
+          <li><a href="#qesap_py">qesap_py</a></li>
+          <li><a href="#qesap_pip">qesap_pip</a></li>
           <li><a href="#qesap_pip_install">qesap_pip_install</a></li>
           <li><a href="#qesap_galaxy_install">qesap_galaxy_install</a></li>
           <li><a href="#qesap_upload_logs">qesap_upload_logs</a></li>
@@ -156,6 +158,14 @@ Return is only valid if failok = 1</code></pre>
 </dd>
 </dl>
 
+<h3 id="qesap_py">qesap_py</h3>
+
+<pre><code>Return string of the python to use</code></pre>
+
+<h3 id="qesap_pip">qesap_pip</h3>
+
+<pre><code>Return string of the pip to use</code></pre>
+
 <h3 id="qesap_pip_install">qesap_pip_install</h3>
 
 <pre><code>Install all Python requirements of the qe-sap-deployment
@@ -270,9 +280,25 @@ Returns 1 if the string is found in the log file, 0 otherwise.</code></pre>
 
 <p>Get the number of cluster nodes from the inventory.yaml</p>
 
+<dl>
+
+<dt id="PROVIDER---Cloud-provider-name-using-same-format-of-PUBLIC_CLOUD_PROVIDER-setting1"><b>PROVIDER</b> - Cloud provider name using same format of PUBLIC_CLOUD_PROVIDER setting</dt>
+<dd>
+
+</dd>
+</dl>
+
 <h3 id="qesap_get_nodes_names">qesap_get_nodes_names</h3>
 
 <p>Get the cluster nodes&#39; names from the inventory.yaml</p>
+
+<dl>
+
+<dt id="PROVIDER---Cloud-provider-name-using-same-format-of-PUBLIC_CLOUD_PROVIDER-setting2"><b>PROVIDER</b> - Cloud provider name using same format of PUBLIC_CLOUD_PROVIDER setting</dt>
+<dd>
+
+</dd>
+</dl>
 
 <h3 id="qesap_get_terraform_dir">qesap_get_terraform_dir</h3>
 
@@ -281,7 +307,7 @@ It is useful if test would like to call terraform</code></pre>
 
 <dl>
 
-<dt id="PROVIDER---Cloud-provider-name-using-same-format-of-PUBLIC_CLOUD_PROVIDER-setting1"><b>PROVIDER</b> - Cloud provider name using same format of PUBLIC_CLOUD_PROVIDER setting</dt>
+<dt id="PROVIDER---Cloud-provider-name-using-same-format-of-PUBLIC_CLOUD_PROVIDER-setting3"><b>PROVIDER</b> - Cloud provider name using same format of PUBLIC_CLOUD_PROVIDER setting</dt>
 <dd>
 
 </dd>
