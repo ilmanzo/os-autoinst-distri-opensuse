@@ -16,8 +16,10 @@ use krb5crypt;    # Import public variables
 
 sub run {
     select_console 'root-console';
-
+    barrier_create($_, 2) for ('NFS_SERVER_READY', 'NFS_CLIENT_DONE');
+    mutex_create 'barrier_setup_done';
     zypper_call("in nfs-kernel-server nfs-client");
+    #krb5_ensure_time_sync();
 
     # Config NFS server
     foreach my $i ('NFS4_SUPPORT', 'NFS_SECURITY_GSS', 'NFS_GSSD_AVOID_DNS') {
@@ -32,12 +34,10 @@ sub run {
     assert_script_run "kadmin -p $adm -w $pass_a -q 'addprinc -randkey nfs/$dom_server'";
     assert_script_run "kadmin -p $adm -w $pass_a -q 'ktadd nfs/$dom_server'";
     systemctl("restart rpc-svcgssd nfs-server");
-
-    mutex_create('CONFIG_READY_NFS_SERVER');
-
+    script_run('timedatectl status'); # display clock 
+    barrier_wait('NFS_SERVER_READY');
     # Waiting for the finishd of krb5 client
-    my $children = get_children();
-    mutex_wait('TEST_DONE_NFS_CLIENT', (keys %$children)[0]);
+    barrier_wait('NFS_CLIENT_DONE');
     mutex_create('TEST_DONE_NFS_SERVER');
 }
 

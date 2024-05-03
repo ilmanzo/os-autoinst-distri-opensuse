@@ -102,7 +102,7 @@ EOF
     dns_canonicalize_hostname = false
     rdns = false
     default_realm = EXAMPLE.COM
-    allow_week_crypto = false
+    allow_weak_crypto = false
     default_tgs_enctypes = $algo
     default_tkt_enctypes = $algo
     permitted_enctypes = $algo

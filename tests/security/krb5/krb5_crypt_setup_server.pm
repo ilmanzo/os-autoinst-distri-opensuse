@@ -16,7 +16,7 @@ use krb5crypt;    # Import public variables
 
 sub run {
     select_console 'root-console';
-
+    #krb5_ensure_time_sync();
     mutex_wait('CONFIG_READY_KRB5_KDC');
     krb5_init;
 

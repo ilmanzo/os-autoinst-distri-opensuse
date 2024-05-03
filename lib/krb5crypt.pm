@@ -34,6 +34,7 @@ our @EXPORT = qw(
   $nfs_fname
 
   krb5_init
+  krb5_ensure_time_sync
 );
 
 our $dom_kdc = 'kdc.example.com';
@@ -73,4 +74,18 @@ sub krb5_init {
     validate_script_output "kadmin -p $adm -q listprincs -w $pass_a", sub {
         m/\Q$adm\E\@\Q$dom\E/;
     };
+}
+
+sub krb5_ensure_time_sync {
+    systemctl "start chronyd";
+    systemctl "enable chronyd";
+    assert_script_run "chronyc makestep";
+    assert_script_run "chronyc waitsync 120 0.5", 1210;
+    my $retries=60;
+    while ($retries--) {
+        my @output=split "\n", script_output "timedatectl status";
+        return if grep { $_ =~ m/System clock synchronized: yes/ } @output;
+        sleep 2;
+    }
+    die "Cannot syncronize time";
 }

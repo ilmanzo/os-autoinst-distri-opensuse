@@ -16,7 +16,8 @@ use krb5crypt;    # Import public variables
 
 sub run {
     select_console 'root-console';
-
+    # be sure time is syncronized
+    #krb5_ensure_time_sync();
     # Create KDC database
     validate_script_output "kdb5_util create -r $dom -s -P $pass_db", sub {
         m/
@@ -26,7 +27,7 @@ sub run {
     validate_script_output "kadmin.local -q listprincs", sub {
         m/krbtgt\/\Q$dom\E\@\Q$dom\E/;
     };
-
+    script_run('timedatectl status'); # display clock 
     # Add admin user
     assert_script_run "kadmin.local -q 'addprinc -pw $pass_a $adm'";
     validate_script_output "kadmin.local -q listprincs", sub {
