@@ -57,7 +57,13 @@ sub run {
 }
 
 sub test_flags {
-    return {fatal => 0, always_rollback => 1};
+    if (is_transactional) {
+        return {fatal => 0, always_rollback => 0};
+    }
+    else {
+        return {fatal => 0, always_rollback => 1};
+    }
+
 }
 
 1;
