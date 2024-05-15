@@ -5,7 +5,13 @@ schedule:
     - installation/bootloader_start
     - boot/boot_to_desktop
     - console/consoletest_setup
+    - '{{create_baseline}}'
     - security/lynis/lynis_setup
     - security/lynis/lynis_perform_system_audit
     - security/lynis/lynis_analyze_system_audit
     - security/lynis/lynis_harden_index
+conditional_schedule:
+    create_baseline:
+        LYNIS_CREATE_BASELINE:
+            1:
+                - security/lynis/lynis_create_baseline
