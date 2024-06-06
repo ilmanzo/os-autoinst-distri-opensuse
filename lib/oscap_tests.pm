@@ -1097,12 +1097,12 @@ sub oscap_remediate {
             }
             $script_cmd .= " > $f_stdout 2> $f_stderr";
         }
-        my $pid = background_script_run($script_cmd, "running $script_cmd");
+        my $pid = background_script_run("nice $script_cmd", "running $script_cmd");
         # wait for command to be complete. It can take 30 upto 60 minutes on slow platforms
         my $minutes = 90;    # 1.5 h
                              # loop while 'ps' command exits with 0, that means process is still running
                              # in this way the user has an hint of some activity and we keep openQA communication alive
-        until (script_run("echo $minutes ; ps -p $pid > /dev/null")) {
+        until (script_run("echo $minutes ; ps -p $pid > /dev/null", timeout => 60)) {
             sleep 60;
             $minutes--;
             die "timeout running Ansible remediation" if $minutes <= 0;
