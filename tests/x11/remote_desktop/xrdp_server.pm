@@ -61,14 +61,15 @@ sub run {
         assert_script_run 'firewall-cmd --zone=public --permanent --add-port=3389/tcp';
         assert_script_run 'firewall-cmd --reload';
 
-        # Start xrdp
+        # Start xrdp and ensure it's active
         systemctl 'start xrdp';
+        assert_script_run 'systemctl is-active xrdp';
     }
 
     # Terminate xterm session
     enter_cmd "exit";
     wait_screen_change { send_key 'alt-f4' };
-    x11_start_program('gnome-session-quit --logout --force', valid => 0);
+    x11_start_program('gnome-session-quit --no-prompt --logout --force', valid => 0);
 
     # Notice xrdp server is ready for remote access
     mutex_create 'xrdp_server_ready';
