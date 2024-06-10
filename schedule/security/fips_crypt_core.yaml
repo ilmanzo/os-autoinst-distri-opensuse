@@ -2,8 +2,7 @@ name: fips_crypt_core
 description:    >
     This is for the crypt_core fips tests.
 schedule:
-    - installation/bootloader_start
-    - boot/boot_to_desktop
+    - '{{boot}}'
     - console/consoletest_setup
     - '{{repo_setup}}'
     - fips/fips_setup
@@ -25,6 +24,25 @@ schedule:
     # ssh disabled in env mode, see poo#125648
     - '{{ssh}}'
 conditional_schedule:
+    boot:
+        BACKEND:
+            qemu:
+                - installation/bootloader_start
+                - boot/boot_to_desktop                
+            s390x:
+                - installation/bootloader_start
+                - boot/boot_to_desktop
+            svirt:
+                - installation/bootloader_start
+                - boot/boot_to_desktop
+            spvm:
+                - installation/bootloader_start
+                - boot/boot_to_desktop
+            pvm_hmc:
+                - installation/bootloader_start
+                - boot/boot_to_desktop
+            ipmi:  # does not need bootloader_start
+                - boot/boot_to_desktop
     repo_setup:
         BETA:
             1:
