@@ -27,12 +27,13 @@ sub run {
     my $masterkey_conf = '/etc/sysconfig/masterkey';
     my $evm_conf = '/etc/sysconfig/evm';
 
-    # Create Kernel Master Key
-    assert_script_run "keyctl add user kmk-user '`dd if=/dev/urandom bs=1 count=32 2>/dev/null`' \@u";
+    # Generate a user key by using a random sequence of numbers
+    assert_script_run q{keyctl add user kmk-user $(dd if=/dev/urandom bs=1 count=32 2>/dev/null) \@u};
     script_run "[ -d $key_dir ] || mkdir $key_dir";
-    assert_script_run "keyctl pipe `/bin/keyctl search \@u user kmk-user` > $userkey_blob";
 
-    # Generate EVM key which will be used for HMACs
+    assert_script_run qq{keyctl pipe `/bin/keyctl search \@u user kmk-user` > $userkey_blob};
+
+    # Generate an encrypted key using the primary key from the previous step
     assert_script_run "keyctl add encrypted evm-key 'new user:kmk-user 64' \@u";
     assert_script_run "keyctl pipe `/bin/keyctl search \@u encrypted evm-key` > $evmkey_blob";
 
