@@ -3,6 +3,7 @@ description:    >
     This is for the crypt_tool fips tests.
 schedule:
     - boot/boot_to_desktop
+    - console/timesync
     - fips/curl_fips_rc4_seed
     - console/aide_check
     - console/gpg

@@ -13,6 +13,7 @@ use testapi;
 use utils;
 use strict;
 use warnings;
+use Utils::Backends 'is_ipmi';
 
 # default ntp service type and name
 my $service_type = 'Systemd';
@@ -31,8 +32,13 @@ sub check_config {
     my $server_count = script_output 'ntpq -p | tail -n +3 | wc -l';
     record_info 'Servers', "Default ntp servers defined: $server_count";
     assert_script_run 'cp /etc/ntp.conf /etc/ntp.conf.bkp';
-    assert_script_run 'echo "server 172.16.12.34" >> /etc/ntp.conf';
-    assert_script_run 'echo "server 172.16.21.43" >> /etc/ntp.conf';
+    if (is_ipmi()) {
+        assert_script_run 'echo "server ntp1.suse.de" >> /etc/ntp.conf';
+        assert_script_run 'echo "server ntp2.suse.de" >> /etc/ntp.conf';
+    } else {
+        assert_script_run 'echo "server 172.16.12.34" >> /etc/ntp.conf';
+        assert_script_run 'echo "server 172.16.21.43" >> /etc/ntp.conf';
+    }
     common_service_action($service_name, $service_type, 'restart');
     assert_script_run 'ntpq -p';
     for (my $i = 0; $i < 5; $i++) {
