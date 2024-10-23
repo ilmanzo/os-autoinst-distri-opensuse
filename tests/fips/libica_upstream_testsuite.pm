@@ -21,7 +21,9 @@ sub run {
     add_suseconnect_product('sle-module-development-tools');
     zypper_call('in libica rpmbuild autoconf automake fipscheck gcc-c++ libtool openssl-devel');
     my $version = get_required_var('VERSION');
-    zypper_call "ar -f http://download.suse.de/ibs/SUSE:/SLE-$version:/GA/standard/ libica-tests";
+    zypper_call "ar -f http://download.suse.de/ibs/SUSE:/SLE-$version:/GA/standard/ libica-tests-$version";
+    # add also fallback 15-SP6 repo when package is not yet available on 15-SP7
+    zypper_call "ar -f http://download.suse.de/ibs/SUSE:/SLE-15-SP6:/GA/standard/ libica-tests-15-SP6";
     zypper_call 'si libica';
     # build output should have FAIL: 0 and ERROR: 0, as example:
     # ============================================================================
