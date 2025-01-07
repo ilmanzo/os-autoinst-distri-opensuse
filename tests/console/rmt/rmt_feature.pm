@@ -96,7 +96,7 @@ sub run {
     # disable the mirrored repos
     assert_script_run("rmt-cli products disable sle-module-legacy/15/x86_64");
     # cleanup the downloaded files
-    assert_script_run("yes yes | rmt-cli repos clean");
+    assert_script_run("echo yes | rmt-cli repos clean", timeout => 300);
     my $ret = script_run("ls /usr/share/rmt/public/repo/SUSE/Products/SLE-Module-Legacy/15/x86_64 | wc -l");
     if ($ret > 0) {
         die 'cleanup repos failed';

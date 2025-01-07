@@ -12,6 +12,7 @@ schedule:
     - fips/mozilla_nss/firefox_nss
     - fips/openjdk/prepare_env
     - fips/openjdk/openjdk_fips
+    - console/rmt/rmt_feature
 conditional_schedule:
     tests_for_64bit:
         ARCH:
