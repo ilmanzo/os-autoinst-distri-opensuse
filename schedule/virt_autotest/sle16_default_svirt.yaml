@@ -4,11 +4,14 @@ name: 'svirt hyperv and vmware'
 schedule:
     - '{{bootloader}}'
     - yam/agama/boot_agama
-    - '{{agama_auto}}'
+    - yam/agama/agama_auto.pm
     - installation/grub_test
     - installation/first_boot
-    - yam/validate/validate_base_product
-    - yam/validate/validate_first_user
+    - console/system_prepare
+    - console/check_network
+    - console/system_state
+    - console/integration_services
+    - '{{open_vm_tools}}'
 conditional_schedule:
     bootloader:
         VIRSH_VMM_FAMILY:
@@ -16,9 +19,7 @@ conditional_schedule:
                 - installation/bootloader_svirt
             hyperv:
                 - installation/bootloader_hyperv
-    agama_auto:
+    open_vm_tools:
         VIRSH_VMM_FAMILY:
             vmware:
-                - yam/agama/agama_auto
-            hyperv:
-                - yam/agama/agama_auto_without_log
+                - virt_autotest/esxi_open_vm_tools

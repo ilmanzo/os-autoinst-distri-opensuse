@@ -34,6 +34,7 @@ use sles4sap::sap_deployment_automation_framework::naming_conventions qw(
 );
 
 our @EXPORT = qw(
+  $output_log_file
   az_login
   sdaf_ssh_key_from_keyvault
   serial_console_diag_banner
@@ -48,9 +49,11 @@ our @EXPORT = qw(
   ansible_execute_command
   ansible_show_status
   playbook_settings
-  $output_log_file
   sdaf_register_byos
   get_sdaf_instance_id
+  sdaf_deployment_reused
+  validate_components
+  get_fencing_mechanism
 );
 
 our $output_log_file = '';
@@ -1072,6 +1075,101 @@ sub sdaf_register_byos {
         sap_sid => $args{sap_sid},
         verbose => 1
     );
+}
+
+=head2 sdaf_deployment_reused
+
+    sdaf_deployment_reused(quiet=>'BeQuiet!');
+
+If an existing deployment is being reused according to openQA setting `SDAF_DEPLOYMENT_ID`, function will display
+`record_info` message with details and returns deployment ID. Otherwise returns nothing/false.
+Argument B<quiet> can be used to disable `record_info` message.
+
+=over
+
+=item * B<quiet>: Hide 'record_info' message. Default: undef
+
+=back
+=cut
+
+sub sdaf_deployment_reused {
+    my (%args) = @_;
+    my $deployment_id = get_var('SDAF_DEPLOYMENT_ID');
+    return unless $deployment_id;
+
+    record_info(
+        'Deploy skip', "OpenQA setting 'SDAF_DEPLOYMENT_ID' defined.\nExisting deployment '$deployment_id' will be used.")
+      if !$args{quiet};
+
+    return $deployment_id;
+}
+
+=head2 validate_components
+
+    validate_components(components=>['db_install', 'db_ha']);
+
+Checks if components list is valid and supported by code. Croaks if not.
+Currently supported components are:
+
+=over
+
+=item * B<components>: B<ARRAYREF> of components that should be installed.
+    Supported values:
+        db_install : Basic DB installation
+        db_ha : Database HA setup
+        nw_pas : Installs primary application server (PAS)
+        nw_aas : Installs additional application server (AAS)
+        nw_ensa : Installs enqueue replication server (ERS)
+
+=back
+
+=cut
+
+sub validate_components {
+    my (%args) = @_;
+    croak '$args{components} must be an ARRAYREF' unless ref($args{components}) eq 'ARRAY';
+
+    my %valid_components = ('db_install' => 'Basic DB installation.',
+        db_ha => 'db_ha : Database HA setup',
+        nw_pas => 'db_pas : Installs primary application server (PAS)',
+        nw_aas => 'nw_aas : Installs additional application server (AAS)',
+        nw_ensa => 'nw_ensa : Installs enqueue replication server (ERS)');
+
+    for my $component (@{$args{components}}) {
+        croak "Unsupported component: '$component'\nSupported values:\n" . join("\n", values(%valid_components))
+          unless grep /^$component$/, keys(%valid_components);
+    }
+    # need to return positive value for unit test to work properly
+    return 1;
+}
+
+=head2 get_fencing_mechanism
+
+    get_fencing_mechanism(components=>['db_install', 'db_ha']);
+
+Converts fencing type naming used by existing OpenQA tests into corresponding value accepted by SDAF setting (tfvars).
+Value is retrieved as a mandatory OpenQA setting 'SDAF_FENCING_MECHANISM'.
+
+B<Value conversion:>
+
+=over
+
+=item * B<msi> =>  'AFA' - Azure fencing agent
+
+=item * B<sbd> => 'ISCSI' - ISCSI based SBD fencing device
+
+=item * B<asd> => 'ASD' - Azure shared disk based SBD device
+
+=back
+
+=cut
+
+sub get_fencing_mechanism {
+    # Fencing type must be set as mandatory OpenQA setting to keep value consistent across whole code
+    my $fencing_type = get_required_var('SDAF_FENCING_MECHANISM');
+    my %supported_fencing_values = (msi => 'AFA', sbd => 'ISCSI', asd => 'ASD');
+    die "Fencing type '$fencing_type' is not supported" unless grep /^$fencing_type$/, keys(%supported_fencing_values);
+    return ($supported_fencing_values{$fencing_type});
 }
 
 1;

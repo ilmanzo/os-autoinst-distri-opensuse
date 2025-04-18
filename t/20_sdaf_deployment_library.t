@@ -19,6 +19,7 @@ sub undef_variables {
       _SECRET_AZURE_SDAF_TENANT_ID
       SDAF_GIT_AUTOMATION_REPO
       SDAF_GIT_TEMPLATES_REPO
+      SDAF_DEPLOYMENT_ID
     );
     set_var($_, '') foreach @openqa_variables;
 }
@@ -529,6 +530,65 @@ subtest '[register_byos] Command check' => sub {
     ok(grep(/sudo/, @commands), 'Execute command under "sudo"');
     ok(grep(/registercloudguest/, @commands), 'Execute command "registercloudguest"');
     ok(grep(/-r HAHA/, @commands), 'Include regcode');
+};
+
+subtest '[sdaf_deployment_reused]' => sub {
+    my $ms_sdaf = Test::MockModule->new('sles4sap::sap_deployment_automation_framework::deployment', no_auto => 1);
+    my $record_info_flag;
+    $ms_sdaf->redefine(record_info => sub { $record_info_flag = 1; note(join(' ', 'RECORD_INFO -->', @_)); });
+
+
+    set_var('SDAF_DEPLOYMENT_ID', undef);
+    is sdaf_deployment_reused, undef, 'Return "undef" if "SDAF_DEPLOYMENT_ID" is not set.';
+    set_var('SDAF_DEPLOYMENT_ID', '42');
+    is sdaf_deployment_reused, '42', 'Return deployment ID if "SDAF_DEPLOYMENT_ID" is set.';
+    ok($record_info_flag, 'Show record info message by default');
+    $record_info_flag = undef;
+    sdaf_deployment_reused(quiet => '1');
+    ok(!$record_info_flag, 'Do not show "record_info" message with "quiet=>1"');
+};
+
+subtest '[validate_components]' => sub {
+    ok validate_components(components => ['db_install']), "Pass with 'db_install' argument";
+    ok validate_components(components => ['db_ha']), "Pass with 'db_ha' argument";
+    ok validate_components(components => ['nw_pas']), "Pass with 'nw_pas' argument";
+    ok validate_components(components => ['nw_aas']), "Pass with 'nw_aas' argument";
+    ok validate_components(components => ['nw_ensa']), "Pass with 'nw_ensa' argument";
+};
+
+subtest '[validate_components] Exceptions' => sub {
+    my @incorrect_values = ('db', 'pas', 'nw', 'ensa', 'aas', 'ha');
+
+    foreach (@incorrect_values) {
+        dies_ok { validate_components(components => [$_]) } "Fail with unsupported value: '$_'";
+    }
+};
+
+subtest '[get_fencing_mechanism] Check value mapping' => sub {
+
+    # OpenQA settinf => SDAF name
+    my %value_mapping = (msi => 'AFA', sbd => 'ISCSI', asd => 'ASD');
+
+    for my $openqa_value (keys %value_mapping) {
+        set_var('SDAF_FENCING_MECHANISM', $openqa_value);
+        is get_fencing_mechanism(), $value_mapping{$openqa_value},
+          "OpenQA setting '$openqa_value' converts to '$value_mapping{$openqa_value}'.";
+        set_var('SDAF_FENCING_MECHANISM', undef);
+    }
+};
+
+subtest '[get_fencing_mechanism] Mandatory Settings' => sub {
+    set_var('SDAF_FENCING_MECHANISM', undef);
+    dies_ok { get_fencing_mechanism() } 'Croak with "SDAF_FENCING_MECHANISM" not being set';
+};
+
+
+subtest '[get_fencing_mechanism] Unsupported values' => sub {
+    for my $bad_value ('msii', 'amsi', 'iscsi', 'sbdf', '', ' ') {
+        set_var('SDAF_FENCING_MECHANISM', $bad_value);
+        dies_ok { get_fencing_mechanism() } "Croak with unsupported 'SDAF_FENCING_MECHANISM' value: '$bad_value'";
+        set_var('SDAF_FENCING_MECHANISM', undef);
+    }
 };
 
 done_testing;

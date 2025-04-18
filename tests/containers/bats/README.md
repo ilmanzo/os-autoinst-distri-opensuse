@@ -1,80 +1,76 @@
 
 This directory contains [BATS framework](https://github.com/bats-core/bats-core) tests for the following packages:
 
-| package | upstream location |
-| --- | --- |
-| [buildah](bats/buildah.pm)	| https://github.com/containers/buildah/tree/main/tests |
-| [netavark](bats/netavark.pm) | https://github.com/containers/netavark/tree/main/test |
-| [podman](bats/podman.pm) | https://github.com/containers/podman/tree/main/test/system |
-| [runc](bats/runc.pm) | https://github.com/opencontainers/runc/tree/main/tests/integration |
-| [skopeo](bats/skopeo.pm) | https://github.com/containers/skopeo/tree/main/systemtest |
+- [aardvark](https://github.com/containers/aardvark-dns/tree/main/test)
+- [buildah](https://github.com/containers/buildah/tree/main/tests)
+- [netavark](https://github.com/containers/netavark/tree/main/test)
+- [podman](https://github.com/containers/podman/tree/main/test/system)
+- [runc](https://github.com/opencontainers/runc/tree/main/tests/integration)
+- [skopeo](https://github.com/containers/skopeo/tree/main/systemtest)
 
-Notes:
-  - The above directories contain tests in each `.bats` file.
-  - Buried in [git history](https://github.com/os-autoinst/os-autoinst-distri-opensuse/commit/0aa21f2cee97a91f35a675199c5d1b125a6e88ff) is the test for [aardvark-dns](https://github.com/containers/aardvark-dns/tree/main/test), disabled due to incomplete network configuration of openQA workers.
-  - Library code is found in [lib/containers/bats.pm](../../../lib/containers/bats.pm)
-  - The scheduling is done in [lib/main_containers.pm](../../../lib/main_containers.pm)
+Library code is found in [lib/containers/bats.pm](../../../lib/containers/bats.pm)
 
-The tests rely on some variables.
+The tests rely on some variables:
 
 | variable | description |
 | --- | --- |
+| `BATS_PACKAGE` | `aardvark` `buildah` `netavark` `podman` `runc` `skopeo` |
+| `BATS_URL` | URL to get the tests from. The default depends on the package version |
+| `BATS_VERSION` | Version of [bats](https://github.com/bats-core/bats-core) to use |
+| `BUILDAH_STORAGE_DRIVER` | Storage driver used for buildah: `vfs` or `overlay` |
+| `ENABLE_SELINUX` | Set to `0` to put SELinux in permissive mode |
 | `OCI_RUNTIME` | OCI runtime to use: `runc` or `crun` |
 
-## buildah
+## aardvark / netavark
 
 | variable | description |
 | --- | --- |
-| `BUILDAH_STORAGE_DRIVER` | Storage driver used for buildah: `vfs` or `overlay` |
-| `BUILDAH_BATS_URL` | URL to get the tests from |
-| `BUILDAH_BATS_TESTS` | Run only the specified tests, otherwise: |
-| `BUILDAH_BATS_SKIP` | Skip subtests on ALL scenarios below: |
-| `BUILDAH_BATS_SKIP_ROOT` | Skip subtests for root user |
-| `BUILDAH_BATS_SKIP_USER` | Skip subtests for non-root user |
+| `BATS_TESTS` | Run only the specified tests, otherwise: |
+| `BATS_SKIP` | Skip subtests |
 
-## netavark
+## buildah / runc / skopeo
 
 | variable | description |
 | --- | --- |
-| `NETAVARK_BATS_URL` | URL to get the tests from |
-| `NETAVARK_BATS_TESTS` | Run only the specified tests, otherwise: |
-| `NETAVARK_BATS_SKIP` | Skip tests on ALL scenarios |
+| `BATS_TESTS` | Run only the specified tests, otherwise: |
+| `BATS_SKIP` | Skip subtests on ALL scenarios below: |
+| `BATS_SKIP_ROOT` | Skip subtests for root user |
+| `BATS_SKIP_USER` | Skip subtests for non-root user |
 
 ## podman
 
 | variable | description |
 | --- | --- |
-| `PODMAN_BATS_URL` | URL to get the tests from |
-| `PODMAN_BATS_TESTS` | Run only the specified tests, otherwise: |
-| `PODMAN_BATS_SKIP` | Skip subtests on ALL scenarios below: |
-| `PODMAN_BATS_SKIP_ROOT_LOCAL` | Skip subtests for root / local |
-| `PODMAN_BATS_SKIP_ROOT_REMOTE` | Skip subtests root / remote |
-| `PODMAN_BATS_SKIP_USER_LOCAL` | Skip subtests for rootless / local |
-| `PODMAN_BATS_SKIP_USER_REMOTE` | Skip subtests for rootless / remote |
-
-## runc
-
-| variable | description |
-| --- | --- |
-| `RUNC_BATS_URL` | URL to get the tests from |
-| `RUNC_BATS_TESTS` | Run only the specified tests, otherwise: |
-| `RUNC_BATS_SKIP` | Skip subtests on ALL scenarios below: |
-| `RUNC_BATS_SKIP_ROOT` | Skip subtests for root user |
-| `RUNC_BATS_SKIP_USER` | Skip subtests for non-root user |
-
-## skopeo
-
-| variable | description |
-| --- | --- |
-| `SKOPEO_BATS_URL` | URL to get the tests from |
-| `SKOPEO_BATS_TESTS` | Run only the specified tests, otherwise: |
-| `SKOPEO_BATS_SKIP` | Skip subtests on ALL scenarios below: |
-| `SKOPEO_BATS_SKIP_ROOT` | Skip subtests for root user |
-| `SKOPEO_BATS_SKIP_USER` | Skip subtests for non-root |
+| `BATS_TESTS` | Run only the specified tests, otherwise: |
+| `BATS_SKIP` | Skip subtests on ALL scenarios below: |
+| `BATS_SKIP_ROOT_LOCAL` | Skip subtests for root / local |
+| `BATS_SKIP_ROOT_REMOTE` | Skip subtests root / remote |
+| `BATS_SKIP_USER_LOCAL` | Skip subtests for rootless / local |
+| `BATS_SKIP_USER_REMOTE` | Skip subtests for rootless / remote |
 
 NOTES
  - The special value `all` may be used to skip all tests.
  - The special value `none` should be used to avoid skipping any subtests.
+
+## Summary of the `BATS_SKIP` variables
+
+| variable | aardvark | buildah | netavark | podman | runc | skopeo |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| `BATS_SKIP` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `BATS_SKIP_ROOT` | | ✅ | | | ✅ | ✅ |
+| `BATS_SKIP_USER` | | ✅ | | | ✅ | ✅ |
+| `BATS_SKIP_ROOT_LOCAL` | | | | ✅ | | |
+| `BATS_SKIP_ROOT_REMOTE` | | | | ✅ | | |
+| `BATS_SKIP_USER_LOCAL` | | | | ✅ | | |
+| `BATS_SKIP_USER_REMOTE` | | | | ✅ | | |
+
+## Workflow
+
+- To debug SELinux issues you may check the audit log & clone a job with `ENABLE_SELINUX=0`
+- To debug runtime issues you may clone a job with `OCI_RUNTIME=crun`.  The default OCI runtime is `runc` on all openSUSE & SUSE products except SLEM 6.0 & 6.1
+- To debug buildah issues you may clone a job with `BUILDAH_STORAGE_DRIVER=vfs`
+- To debug individual tests you may clone a job with `BATS_TESTS`
+- You can also use `BATS_URL` to use the latest version from the `main` branch like `BATS_URL=https://github.com/containers/netavark/archive/refs/heads/main.tar.gz`
 
 ## openQA schedules
 
@@ -83,30 +79,67 @@ NOTES
 - [Latest SLES 15](https://gitlab.suse.de/qac/qac-openqa-yaml/-/blob/master/containers/latest_host.yaml)
 - [SLES 15-SP3+](https://gitlab.suse.de/qac/qac-openqa-yaml/-/blob/master/containers/updates.yaml)
 
+NOTES
+- As of now, all jobs are `x86_64` only.
+
 ## openQA jobs
 
-| product | packages |
-| --- | ---|
-| opensuse Tumbleweed	| [runc skopeo netavark](https://openqa.opensuse.org/tests/latest?distri=opensuse&flavor=DVD&version=Tumbleweed&arch=x86_64&test=container_host_bats_testsuite) |
-| | [buildah](https://openqa.opensuse.org/tests/latest?distri=opensuse&flavor=DVD&version=Tumbleweed&arch=x86_64&test=container_host_buildah_testsuite) |
-| | [podman](https://openqa.opensuse.org/tests/latest?distri=opensuse&flavor=DVD&version=Tumbleweed&arch=x86_64&test=container_host_podman_testsuite) |
-| Latest SLE 16 | [runc skopeo netavark](https://openqa.suse.de/tests/latest?distri=sle&flavor=Online&version=16.0&arch=x86_64&test=bats_testsuite) |
-| | [buildah](https://openqa.suse.de/tests/latest?distri=sle&flavor=Online&version=16.0&arch=x86_64&test=buildah_testsuite) |
-| | [podman](https://openqa.suse.de/tests/latest?distri=sle&flavor=Online&version=16.0&arch=x86_64&test=podman_testsuite) |
-| Latest SLE 15 | [runc skopeo netavark](https://openqa.suse.de/tests/latest?distri=sle&flavor=Online&version=15-SP7&arch=x86_64&test=bats_testsuite) |
-| |	[buildah](https://openqa.suse.de/tests/latest?distri=sle&flavor=Online&version=15-SP7&arch=x86_64&test=buildah_testsuite) |
-| |	[podman](https://openqa.suse.de/tests/latest?distri=sle&flavor=Online&version=15-SP7&arch=x86_64&test=podman_testsuite) |
-| SLE 15-SP7 | [runc skopeo netavark](https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP7&arch=x86_64&test=bats_testsuite) |
-| | [buildah](https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP7&arch=x86_64&test=buildah_testsuite) |
-| | [podman](https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP7&arch=x86_64&test=podman_testsuite) |
-| SLE 15-SP6 | [runc skopeo netavark](https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP6&arch=x86_64&test=bats_testsuite) |
-| | [buildah](https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP6&arch=x86_64&test=buildah_testsuite)
-| | [podman](https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP6&arch=x86_64&test=podman_testsuite)
-| SLE 15-SP5 | [runc skopeo netavark](https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP5&arch=x86_64&test=bats_testsuite) |
-| | [buildah](https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP5&arch=x86_64&test=buildah_testsuite)
-| SLE 15-SP4 | [runc skopeo netavark](https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP4&arch=x86_64&test=bats_testsuite) |
-| | [buildah](https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP4&arch=x86_64&test=buildah_testsuite) |
-| SLE 15-SP3 | [runc skopeo netavark](https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP3&arch=x86_64&test=bats_testsuite) |
+| Product             | aardvark        | buildah          | netavark         | podman           | runc             | skopeo |
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| openSUSE Tumbleweed | [![logo]][tw_a] | [![logo]][tw_b]  | [![logo]][tw_n]  | [![logo]][tw_p]  | [![logo]][tw_r]  | [![logo]][tw_s] |
+| Latest SLES 16      |                 | [![logo]][s16_b] | [![logo]][s16_n] | [![logo]][s16_p] | [![logo]][s16_r] | [![logo]][s16_s] |
+| Latest SLES 15      |                 | [![logo]][s15_b] | [![logo]][s15_n] | [![logo]][s15_p] | [![logo]][s15_r] | [![logo]][s15_s] |
+| SLES 15 SP7         |                 | [![logo]][sp7_b] | [![logo]][sp7_n] | [![logo]][sp7_p] | [![logo]][sp7_r] | [![logo]][sp7_s] |
+| SLES 15 SP6         |                 | [![logo]][sp6_b] | [![logo]][sp6_n] | [![logo]][sp6_p] | [![logo]][sp6_r] | [![logo]][sp6_s] |
+| SLES 15 SP5         |                 | [![logo]][sp5_b] | [![logo]][sp5_n] |                  | [![logo]][sp5_r] | [![logo]][sp5_s] |
+| SLES 15 SP4         |                 | [![logo]][sp4_b] |                  |                  | [![logo]][sp4_r] | [![logo]][sp4_s] |
+| SLES 15 SP3         |                 |                  |                  |                  | [![logo]][sp3_r] | [![logo]][sp3_s] |
+
+[logo]: logo.svg
+
+[tw_a]: https://openqa.opensuse.org/tests/latest?distri=opensuse&flavor=DVD&version=Tumbleweed&arch=x86_64&test=container_host_aardvark_testsuite
+[tw_b]: https://openqa.opensuse.org/tests/latest?distri=opensuse&flavor=DVD&version=Tumbleweed&arch=x86_64&test=container_host_buildah_testsuite
+[tw_n]: https://openqa.opensuse.org/tests/latest?distri=opensuse&flavor=DVD&version=Tumbleweed&arch=x86_64&test=container_host_netavark_testsuite
+[tw_p]: https://openqa.opensuse.org/tests/latest?distri=opensuse&flavor=DVD&version=Tumbleweed&arch=x86_64&test=container_host_podman_testsuite
+[tw_r]: https://openqa.opensuse.org/tests/latest?distri=opensuse&flavor=DVD&version=Tumbleweed&arch=x86_64&test=container_host_runc_testsuite
+[tw_s]: https://openqa.opensuse.org/tests/latest?distri=opensuse&flavor=DVD&version=Tumbleweed&arch=x86_64&test=container_host_skopeo_testsuite
+
+[s16_b]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Online&version=16.0&arch=x86_64&test=buildah_testsuite
+[s16_n]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Online&version=16.0&arch=x86_64&test=netavark_testsuite
+[s16_p]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Online&version=16.0&arch=x86_64&test=podman_testsuite
+[s16_r]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Online&version=16.0&arch=x86_64&test=runc_testsuite
+[s16_s]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Online&version=16.0&arch=x86_64&test=skopeo_testsuite
+
+[s15_b]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Online&version=15-SP7&arch=x86_64&test=buildah_testsuite
+[s15_n]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Online&version=15-SP7&arch=x86_64&test=netavark_testsuite
+[s15_p]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Online&version=15-SP7&arch=x86_64&test=podman_testsuite
+[s15_r]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Online&version=15-SP7&arch=x86_64&test=runc_testsuite
+[s15_s]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Online&version=15-SP7&arch=x86_64&test=skopeo_testsuite
+
+[sp7_b]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP7&arch=x86_64&test=buildah_testsuite
+[sp7_n]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP7&arch=x86_64&test=netavark_testsuite
+[sp7_p]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP7&arch=x86_64&test=podman_testsuite
+[sp7_r]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP7&arch=x86_64&test=runc_testsuite
+[sp7_s]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP7&arch=x86_64&test=skopeo_testsuite
+
+[sp6_b]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP6&arch=x86_64&test=buildah_testsuite
+[sp6_n]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP6&arch=x86_64&test=netavark_testsuite
+[sp6_p]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP6&arch=x86_64&test=podman_testsuite
+[sp6_r]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP6&arch=x86_64&test=runc_testsuite
+[sp6_s]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP6&arch=x86_64&test=skopeo_testsuite
+
+[sp5_b]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP5&arch=x86_64&test=buildah_testsuite
+[sp5_n]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP5&arch=x86_64&test=netavark_testsuite
+[sp5_r]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP5&arch=x86_64&test=runc_testsuite
+[sp5_s]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP5&arch=x86_64&test=skopeo_testsuite
+
+[sp4_b]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP4&arch=x86_64&test=buildah_testsuite
+[sp4_r]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP4&arch=x86_64&test=runc_testsuite
+[sp4_s]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP4&arch=x86_64&test=skopeo_testsuite
+
+[sp3_r]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP3&arch=x86_64&test=runc_testsuite
+[sp3_s]: https://openqa.suse.de/tests/latest?distri=sle&flavor=Server-DVD-Updates&version=15-SP3&arch=x86_64&test=skopeo_testsuite
+
 
 ## Tools
 

@@ -8,7 +8,7 @@ use strict;
 use warnings;
 use Mojo::Base 'publiccloud::basetest';
 use testapi;
-use qesapdeployment;
+use sles4sap::qesap::qesapdeployment;
 use hacluster qw($crm_mon_cmd cluster_status_matches_regex);
 
 sub run {
@@ -43,9 +43,8 @@ sub run {
 
 sub post_fail_hook {
     my ($self) = shift;
-    # This test module does not have both
-    # fatal flag and qesap_test_postfail, so that in case of failure
-    # the next test_ module is executed too.
+    # This test module does not have the fatal flag.
+    # In case of failure, the next test_ module is executed too.
     # Deployment destroy is delegated to the destroy test module
     $self->SUPER::post_fail_hook;
 }

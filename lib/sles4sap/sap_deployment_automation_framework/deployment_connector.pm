@@ -34,6 +34,8 @@ use Time::Piece;
 use mmapi qw(get_parents get_job_autoinst_vars get_children get_job_info get_current_job_id);
 use sles4sap::azure_cli qw(az_resource_delete az_resource_list);
 use Data::Dumper;
+use Mojo::URL;
+use Mojo::UserAgent;
 
 our @EXPORT = qw(
   get_deployer_vm_name
@@ -43,6 +45,7 @@ our @EXPORT = qw(
   find_deployer_resources
   destroy_deployer_vm
   destroy_orphaned_resources
+  no_cleanup_tag
 );
 
 =head2 check_ssh_availability
@@ -193,6 +196,9 @@ Using OpenQA parameter B<SDAF_DEPLOYMENT_ID> it is possible to override this val
 purposes where it allows you to run test code on already existing deployment. Use it with caution and override
 the value only with ID of the infrastructure that belongs to you.
 
+Parameter B<SDAF_GRANDPARENT_ID> is used for SDAF cleanup job to cleanup resources created by grandparents job.
+If B<SDAF_DEPLOYMENT_ID> is not defined then B<SDAF_GRANDPARENT_ID> is the job id of deployment.
+
 B<Example>:
 Job: 123456 - deployment module - created deployer VM tagged with "deployment_id=123456",
 Job: 123457 (child of 123456) - some test module
@@ -208,15 +214,39 @@ Deployment ID returned from both jobs: 123456 - because it matches with existing
 sub find_deployment_id {
     my (%args) = @_;
     return get_var('SDAF_DEPLOYMENT_ID') if get_var('SDAF_DEPLOYMENT_ID');
+    return get_var('SDAF_GRANDPARENT_ID') if get_var('SDAF_GRANDPARENT_ID');
+
     $args{deployer_resource_group} //= get_required_var('SDAF_DEPLOYER_RESOURCE_GROUP');
     my @check_list = (get_current_job_id(), @{get_parent_ids()});
 
-    diag("Job IDs found: " . Dumper(@check_list));
+    # For SDAF cleanup job it needs its grandparent's id
+    my @parents = get_parent_ids();
+    my $parent_id = $parents[0][0];
+    if (looks_like_number($parent_id) && @parents == 1) {
+        # Get the SDAF deployment job ID, here it is set via SDAF_GRANDPARENT_ID and saved in vars.json
+        my $vars_json = 'vars.json';
+        my $openqa_url = get_required_var('OPENQA_URL');
+        my $url = Mojo::URL->new("https://$openqa_url/tests/$parent_id/file/$vars_json") or die "No $vars_json found";
+        my $ua = Mojo::UserAgent->new;
+        $ua->insecure(1);
+        my $tx = $ua->get($url);
+        my $json = $tx->res->json;
+        my $id = $json->{SDAF_GRANDPARENT_ID};
+        if ($id) {
+            @check_list = ($id);
+            record_info("SDAF grandparent id of cleanup job:$id");
+        }
+    }
+
+    record_info("Job IDs found", Dumper(@check_list));
     my @ids_found;
     for my $deployment_id (@check_list) {
         my $vm_name =
           get_deployer_vm_name(deployer_resource_group => $args{deployer_resource_group}, deployment_id => $deployment_id);
         push(@ids_found, $deployment_id) if $vm_name;
+
+        # Set SDAF_GRANDPARENT_ID, SDAF cleanup job needs this id for cleanup
+        set_var('SDAF_GRANDPARENT_ID', $deployment_id);
     }
     die "More than one deployment found.\nJobs IDs: " .
       join(', ', @check_list) . "\nVMs found: " . join(', ', @ids_found) if @ids_found > 1;
@@ -360,10 +390,11 @@ permanent SDAF infrastructure.
 sub destroy_orphaned_resources {
     my (%args) = @_;
     $args{timeout} //= 1200;
-    # List all resources containing 'deployment_id' tag - this should filter out only resources created by an openQA test.
+    # List all resources containing 'deployment_id' tag with exception of ones containing 'no cleanup' tag
+    # Result will show only resources created by OpenQA tests and only those which are allowed to be cleaned up.
     my $all_resources = az_resource_list(
         resource_group => get_required_var('SDAF_DEPLOYER_RESOURCE_GROUP'),
-        query => '[?tags.deployment_id].{resource_id:id, creation_time:createdTime}'
+        query => '[?tags.deployment_id && tags.' . no_cleanup_tag() . ' == null ].{resource_id:id, creation_time:createdTime}'
     );
     my @orphaned_resources;
 
@@ -386,4 +417,18 @@ sub destroy_orphaned_resources {
     return unless @orphaned_resources;
     record_info('az destroy', "Following orphaned resources will be destroyed:\n" . join("\n", @orphaned_resources));
     destroy_resources(timeout => $args{timeout}, resource_cleanup_list => \@orphaned_resources);
+}
+
+=head2 no_cleanup_tag
+
+    no_cleanup_tag();
+
+Returns tag name that marks resource to be omitted during cleanup routine. Tag name can be defined by OpenQA setting
+`SDAF_NO_CLEANUP_TAG` with default value being 'sdaf_cleanup_ignore'.
+This function ensures default value naming consistency across all modules, instead defining it with each 'get_var' call.
+
+=cut
+
+sub no_cleanup_tag {
+    return get_var('SDAF_NO_CLEANUP_TAG', 'sdaf_cleanup_ignore');
 }

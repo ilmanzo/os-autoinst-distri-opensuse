@@ -13,7 +13,6 @@ use warnings;
 use sles4sap::sap_deployment_automation_framework::deployment;
 use sles4sap::sap_deployment_automation_framework::naming_conventions;
 use sles4sap::console_redirection qw(connect_target_to_serial disconnect_target_from_serial);
-use sles4sap::sap_deployment_automation_framework::configure_tfvars qw(validate_components);
 use serial_terminal qw(select_serial_terminal);
 use testapi;
 use publiccloud::utils 'is_byos';
@@ -62,6 +61,9 @@ sub test_flags {
 }
 
 sub run {
+    # Skip module if existing deployment is being re-used
+    return if sdaf_deployment_reused();
+
     serial_console_diag_banner('Module sdaf_deploy_hanasr.pm : start');
     my $sap_sid = get_required_var('SAP_SID');
     my $sdaf_config_root_dir = get_sdaf_config_path(
@@ -72,6 +74,7 @@ sub run {
         sap_sid => $sap_sid);
     my $sut_private_key_path = get_sut_sshkey_path(config_root_path => $sdaf_config_root_dir);
     # setup = combination of all components chosen for installation
+    # Leave OpenQA setting mandatory without default value to keep it consistent across all test modules.
     my @setup = split(/,/, get_required_var('SDAF_DEPLOYMENT_SCENARIO'));
     validate_components(components => \@setup);
 

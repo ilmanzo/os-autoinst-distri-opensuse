@@ -32,7 +32,7 @@ use publiccloud::instance;
 use publiccloud::instances;
 use publiccloud::utils qw(is_azure is_gce is_ec2 get_ssh_private_key_path is_byos);
 use sles4sap_publiccloud;
-use qesapdeployment;
+use sles4sap::qesap::qesapdeployment;
 use serial_terminal 'select_serial_terminal';
 use registration qw(get_addon_fullname scc_version %ADDONS_REGCODE);
 
@@ -80,6 +80,15 @@ sub run {
 
     set_var('FENCING_MECHANISM', 'native') unless ($ha_enabled);
     set_var_output('ANSIBLE_REMOTE_PYTHON', '/usr/bin/python3');
+
+    if (is_azure()) {
+        # Within the qe-sap-deployment terraform code,
+        # an empty string means no peering.
+        # This "trick" is needed to only have one conf.yaml
+        # for both jobs that creates the peering with terraform or the az cli
+        set_var('IBSM_RG', '') unless (get_var('IBSM_RG'));
+        set_var('IBSM_VNET', '') unless (get_var('IBSM_VNET'));
+    }
 
     my $deployment_name = deployment_name();
     # Create a QESAP_DEPLOYMENT_NAME variable so it includes the random
@@ -204,20 +213,26 @@ sub run {
     # Regenerate config files (This workaround will be replaced with full yaml generator)
     qesap_prepare_env(provider => $provider_setting, only_configure => 1);
 
-    # Retrying terraform more times in case of GCP, to handle concurrent peering attempts
-    my $retries = is_gce() ? 5 : 2;
-    my @ret = qesap_execute_conditional_retry(
-        cmd => 'terraform',
+    my %retry_args = (
         logname => 'qesap_exec_terraform.log.txt',
         verbose => 1,
         timeout => 3600,
-        retries => $retries,
         error_list => [
             'An internal execution error occurred. Please retry later',
             'There is a peering operation in progress'
         ],
-        destroy_terraform => 1);
+        destroy => 1);
+    # Retrying terraform more times in case of GCP, to handle concurrent peering attempts
+    $retry_args{retries} = is_gce() ? 5 : 2;
+    $retry_args{cmd_options} = '--parallel ' . get_var('HANASR_TERRAFORM_PARALLEL') if get_var('HANASR_TERRAFORM_PARALLEL');
+    my @ret = qesap_terraform_conditional_retry(%retry_args);
     die 'Terraform deployment FAILED. Check "qesap*" logs for details.' if ($ret[0]);
+
+    # Sleep $N for fixing ansible "Missing sudo password" issue on GCP
+    if (is_gce()) {
+        sleep 60;
+        record_info('Workaround: "sleep 60" for fixing ansible "Missing sudo password" issue on GCP');
+    }
 
     $provider->terraform_applied(1);
     my $instances = create_instance_data(provider => $provider);

@@ -9,15 +9,17 @@ function(addon_ha_reg_code='',
          user=true,
          root=true,
          storage='',
+         packages='',
          patterns='',
          product='',
          registration_code='',
          scripts_pre='',
          scripts_post='') {
   [if bootloader == true then 'bootloader']: base_lib['bootloader'],
-  [if patterns != '' then 'software']: {
-    patterns: [patterns]
-  },
+  [if patterns != '' || packages != '' then 'software']: std.prune({
+    patterns: if patterns != '' then std.split(patterns, ','),
+    packages: if packages != '' then std.split(packages, ','),
+  }),
   [if product != '' then 'product']: {
     [if addon_ha_reg_code != '' then 'addons']: std.prune([
       if addon_ha_reg_code != '' then addons_lib.addon_ha(addon_ha_reg_code),
@@ -32,7 +34,9 @@ function(addon_ha_reg_code='',
   },
   [if storage == 'lvm' then 'storage']: storage_lib['lvm'],
   [if storage == 'lvm_encrypted' then 'storage']: storage_lib['lvm_encrypted'],
+  [if storage == 'lvm_tpm_fde' then 'storage']: storage_lib['lvm_tpm_fde'],
   [if storage == 'root_filesystem_ext4' then 'storage']: storage_lib['root_filesystem_ext4'],
   [if storage == 'root_filesystem_xfs' then 'storage']: storage_lib['root_filesystem_xfs'],
+  [if storage == 'whole_disk_and_boot_unattended' then 'storage']: storage_lib['whole_disk_and_boot_unattended'],
   [if user == true then 'user']: base_lib['user'],
 }
