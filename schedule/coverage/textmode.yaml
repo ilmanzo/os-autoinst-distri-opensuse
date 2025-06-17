@@ -1,0 +1,35 @@
+name:           measure test coverage for selected text mode utils
+description:    >
+    Maintainer: amanzini
+schedule:
+  - autoyast/prepare_profile
+  - installation/isosize
+  - installation/bootloader
+  - autoyast/installation
+  - autoyast/console
+  - autoyast/login
+  - autoyast/autoyast_reboot
+  - installation/grub_test
+  - installation/first_boot
+  - coverage/coverage_setup
+  - console/nano
+  - console/nginx
+  - console/sysctl
+  - console/unzip
+  - coverage/coverage_report
+test_data:
+# the repos to add into the machine
+  repositories:
+    main: http://download.opensuse.org/tumbleweed/repo/oss/
+    update: http://download.opensuse.org/update/tumbleweed/
+    debug:  http://download.opensuse.org/debug/tumbleweed/repo/oss/ 
+# these packages are needed by the tests
+  extra_packages:
+    - wget
+# the following section is an hash of
+# package_name -> binary to instrument
+  coverage_targets:
+    nano: /usr/bin/nano
+    nginx: /sbin/nginx
+    procps: /sbin/sysctl
+    unzip: /usr/bin/unzip
