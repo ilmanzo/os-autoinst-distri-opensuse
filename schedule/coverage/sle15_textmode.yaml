@@ -1,0 +1,41 @@
+# schedule tests for coverage measurement ; 
+# when you add a test, you need to fill out the last 
+# section about coverage targets as well
+
+name:  measure test coverage for selected text mode utils
+description: >
+    Maintainer: amanzini
+schedule:
+  - autoyast/prepare_profile
+  - installation/bootloader_start
+  - autoyast/installation
+  - autoyast/console
+  - autoyast/login
+  - autoyast/autoyast_reboot
+  - installation/grub_test
+  - installation/first_boot
+  - coverage/coverage_setup
+  - console/lshw
+  - console/nano
+  - console/nginx
+  - console/sysctl
+  - console/unzip
+  - coverage/coverage_report
+test_data:
+# the repos to add into the machine
+  repositories:
+    devtools: 'http://download.opensuse.org/repositories/devel:/tools/openSUSE_Tumbleweed'
+    main: http://download.opensuse.org/tumbleweed/repo/oss/
+    update: http://download.opensuse.org/update/tumbleweed/
+    debug:  http://download.opensuse.org/debug/tumbleweed/repo/oss/ 
+# these packages are needed by the tests
+  extra_packages:
+    - coverage-tools
+# the following section is an hash of
+# package_name -> binary to instrument
+  coverage_targets:
+    lshw: /usr/sbin/lshw
+    nano: /usr/bin/nano
+    nginx: /sbin/nginx
+    procps: /sbin/sysctl
+    unzip: /usr/bin/unzip

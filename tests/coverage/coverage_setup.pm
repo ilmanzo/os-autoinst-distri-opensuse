@@ -17,6 +17,7 @@ use strict;
 use warnings;
 use testapi;
 use utils;
+use version_utils 'is_sle';
 use serial_terminal 'select_serial_terminal';
 use scheduler 'get_test_suite_data';
 
@@ -24,13 +25,18 @@ sub run {
     select_serial_terminal;
     # enable debug repos
     # on Tumbleweed does not have debuginfo in to-be-tested snapshots, except for selected package
-    # (see REPO_OSS_DEBUGINFO_PACKAGES)
 
-    my $test_data = get_test_suite_data();
     # TODO maybe not the best way, but it works
+    my $test_data = get_test_suite_data();
 
-    while (my ($name, $url) = each(%{$test_data->{repositories}})) {
-        assert_script_run "zypper ar -e -f $url $name";
+    if (is_sle '>=15SP4') {
+        # enable debug repos
+        assert_script_run q(zypper mr -e $(zypper lr | awk '/Debug/ {print $1}'));
+        assert_script_run 'zypper ref';
+    } else {
+        while (my ($name, $url) = each(%{$test_data->{repositories}})) {
+            assert_script_run "zypper ar -e -f $url $name";
+        }
     }
 
     zypper_call '--gpg-auto-import-keys in ' . join ' ', @{$test_data->{extra_packages}};
