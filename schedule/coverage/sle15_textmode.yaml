@@ -4,7 +4,11 @@
 
 name:  measure test coverage for selected text mode utils
 description: >
-    Maintainer: amanzini
+  Maintainer: amanzini
+vars:
+  AUTOYAST_PREPARE_PROFILE: 1
+  AUTOYAST_CONFIRM: 1
+  DESKTOP: textmode    
 schedule:
   - autoyast/prepare_profile
   - installation/bootloader_start
@@ -39,3 +43,23 @@ test_data:
     nginx: /sbin/nginx
     procps: /sbin/sysctl
     unzip: /usr/bin/unzip
+  disks:
+    - name: sda
+      table_type: gpt
+      partitions:
+        - name: sda2
+          formatting_options:
+            filesystem: btrfs
+          mounting_options:
+            mount_point: /
+        - name: sda3
+          formatting_options:
+            filesystem: xfs
+          mounting_options:
+            mount_point: /home
+        - name: sda4
+          formatting_options:
+            filesystem: swap
+          mounting_options:
+            mount_point: '[SWAP]'
+  <<: !include test_data/yast/autoyast/profiles/mini.yaml
