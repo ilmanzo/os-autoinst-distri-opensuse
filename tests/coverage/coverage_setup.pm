@@ -38,7 +38,8 @@ sub run {
         assert_script_run q(zypper mr -e $(zypper lr | awk '/Debug/ {print $1}'));
         my $version = get_required_var('VERSION');
         %repositories = (
-            basesystem_debug => "http://download.suse.de/ibs/SUSE/Products/SLE-Module-Basesystem/$version/x86_64/product_debug/"
+            basesystem_debug => "http://download.suse.de/ibs/SUSE/Products/SLE-Module-Basesystem/$version/x86_64/product_debug/",
+            serverapp_debug => "http://download.suse.de/ibs/SUSE/Products/SLE-Module-Server-Applications/$version/x86_64/product_debug/"
         );
     } else {
         %repositories = (
