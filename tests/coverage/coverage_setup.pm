@@ -20,6 +20,7 @@ use utils;
 use version_utils 'is_sle';
 use serial_terminal 'select_serial_terminal';
 use scheduler 'get_test_suite_data';
+use repo_tools 'add_qa_head_repo';
 
 sub run {
     select_serial_terminal;
@@ -29,12 +30,19 @@ sub run {
     # TODO maybe not the best way, but it works
     my $test_data = get_test_suite_data();
 
-    if (is_sle '>=15SP4') {
+    if (is_sle '>=15-SP4') {
+        add_qa_head_repo;
         # enable debug repos
         assert_script_run q(zypper mr -e $(zypper lr | awk '/Debug/ {print $1}'));
         assert_script_run 'zypper ref';
     } else {
-        while (my ($name, $url) = each(%{$test_data->{repositories}})) {
+        # declare an hash of repositories to add
+        my %repositories = (
+            devtools => 'http://download.opensuse.org/repositories/devel:/tools/openSUSE_Tumbleweed',
+            main => 'http://download.opensuse.org/tumbleweed/repo/oss/',
+            update => 'http://download.opensuse.org/update/tumbleweed/',
+            debug => 'http://download.opensuse.org/debug/tumbleweed/repo/oss/');
+        while (my ($name, $url) = each(%repositories)) {
             assert_script_run "zypper ar -e -f $url $name";
         }
     }
