@@ -20,7 +20,6 @@ schedule:
   - installation/first_boot
   - coverage/coverage_setup
   - console/lshw
-  - console/nano
   - console/nginx
   - console/sysctl
   - console/unzip
@@ -33,7 +32,6 @@ test_data:
 # package_name -> binary to instrument
   coverage_targets:
     lshw: /usr/sbin/lshw
-    nano: /usr/bin/nano
     nginx: /sbin/nginx
     procps: /sbin/sysctl
     unzip: /usr/bin/unzip
