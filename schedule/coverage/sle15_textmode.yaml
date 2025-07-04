@@ -20,7 +20,6 @@ schedule:
   - installation/first_boot
   - coverage/coverage_setup
   - console/lshw
-  - console/nginx
   - console/sysctl
   - console/unzip
   - coverage/coverage_report
@@ -32,7 +31,6 @@ test_data:
 # package_name -> binary to instrument
   coverage_targets:
     lshw: /usr/sbin/lshw
-    nginx: /sbin/nginx
     procps: /sbin/sysctl
     unzip: /usr/bin/unzip
   disks:
