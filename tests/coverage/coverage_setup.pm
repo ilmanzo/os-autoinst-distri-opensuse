@@ -37,9 +37,13 @@ sub run {
         # enable debug repos
         assert_script_run q(zypper mr -e $(zypper lr | awk '/Debug/ {print $1}'));
         my $version = get_required_var('VERSION');
+        my $baseurl = 'http://download.suse.de/ibs/SUSE/Products';
+        my $debug_suffix = 'x86_64/product_debug/';
         %repositories = (
-            basesystem_debug => "http://download.suse.de/ibs/SUSE/Products/SLE-Module-Basesystem/$version/x86_64/product_debug/",
-            serverapp_debug => "http://download.suse.de/ibs/SUSE/Products/SLE-Module-Server-Applications/$version/x86_64/product_debug/"
+            basesystem_debug => "$baseurl/SLE-Module-Basesystem/$version/$debug_suffix",
+            serverapp_debug => "$baseurl/SLE-Module-Server-Applications/$version/$debug_suffix",
+            legacy_debug => "$baseurl/SLE-Module-Legacy/$version/$debug_suffix",
+            scripting_debug => "$baseurl/SLE-Module-Web-Scripting/$version/$debug_suffix",
         );
     } else {
         %repositories = (
