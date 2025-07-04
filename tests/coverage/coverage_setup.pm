@@ -30,22 +30,27 @@ sub run {
     # TODO maybe not the best way, but it works
     my $test_data = get_test_suite_data();
 
+    my %repositories;    # an hash of repositories to add
+
     if (is_sle '>=15-SP4') {
         add_qa_head_repo;
         # enable debug repos
         assert_script_run q(zypper mr -e $(zypper lr | awk '/Debug/ {print $1}'));
-        assert_script_run 'zypper ref';
+        my $version = get_required_var('VERSION');
+        %repositories = (
+            basesystem_debug => "http://download.suse.de/ibs/SUSE/Products/SLE-Module-Basesystem/$version/x86_64/product_debug/"
+        );
     } else {
-        # declare an hash of repositories to add
-        my %repositories = (
+        %repositories = (
             devtools => 'http://download.opensuse.org/repositories/devel:/tools/openSUSE_Tumbleweed',
             main => 'http://download.opensuse.org/tumbleweed/repo/oss/',
             update => 'http://download.opensuse.org/update/tumbleweed/',
             debug => 'http://download.opensuse.org/debug/tumbleweed/repo/oss/');
-        while (my ($name, $url) = each(%repositories)) {
-            assert_script_run "zypper ar -e -f $url $name";
-        }
     }
+    while (my ($name, $url) = each(%repositories)) {
+        assert_script_run "zypper ar -e -f $url $name";
+    }
+
 
     zypper_call '--gpg-auto-import-keys in ' . join ' ', @{$test_data->{extra_packages}};
 
