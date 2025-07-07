@@ -17,7 +17,7 @@ use testapi;
 use utils;
 use openjdktest;
 use registration qw(add_suseconnect_product);
-use version_utils qw(is_sle is_sled is_rt);
+use version_utils qw(is_sle is_sled is_rt is_sles4sap);
 use security::openjdk_utils qw(get_java_versions);
 
 
