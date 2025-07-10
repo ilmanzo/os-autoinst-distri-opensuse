@@ -19,6 +19,7 @@ schedule:
   - coverage/coverage_setup
   - console/cpio
   - console/gd
+  - console/iotop
   - console/lshw
   - console/nano
   - console/nftables  
@@ -33,6 +34,7 @@ test_data:
     - wget
     - cpio
     - gd
+    - iotop
     - lshw
     - nano
     - nftables
@@ -47,6 +49,7 @@ test_data:
     - /usr/bin/cpio
     - /usr/bin/giftogd2
     - /usr/bin/gd2togif
+    - /usr/sbin/iotop
     - /usr/sbin/lshw
     - /usr/bin/nano
     - /usr/sbin/nft
