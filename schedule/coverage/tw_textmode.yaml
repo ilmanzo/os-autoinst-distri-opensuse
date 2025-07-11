@@ -27,12 +27,14 @@ schedule:
   - console/pciutils
   - console/sysctl
   - console/unzip
+  - console/git
   - coverage/coverage_report
 test_data:
 # these packages are needed by the tests, we need to install them early to instrument them
   extra_packages:
     - wget
     - cpio
+    - git
     - gd
     - lshw
     - nano
@@ -46,6 +48,7 @@ test_data:
     - iputils  # for ping 
 # the following section is an array of binaries that we want to instrument
   coverage_targets:
+    - /usr/bin/git
     - /usr/bin/cpio
     - /usr/bin/giftogd2
     - /usr/bin/gd2togif
