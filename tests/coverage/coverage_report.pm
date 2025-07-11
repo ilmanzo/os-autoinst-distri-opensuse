@@ -13,7 +13,7 @@ use serial_terminal 'select_serial_terminal';
 sub run {
     select_serial_terminal;
     assert_script_run 'mkdir -p /var/coverage/report';
-    assert_script_run 'funkoverage report $LOG_DIR /var/coverage/report';
+    assert_script_run 'funkoverage report /var/coverage/data /var/coverage/report';
     # Upload the coverage report files
     my @files = split("\n", script_output 'ls -1 /var/coverage/report/*');
     # parse the XML reports
