@@ -68,12 +68,12 @@ sub run {
     zypper_call '--gpg-auto-import-keys in ' . join ' ', @packages;
 
     # sets up the environment for coverage
-    assert_script_run 'export LOG_DIR=/tmp/coverage/data';
+    assert_script_run 'export LOG_DIR=/var/coverage/data';
     assert_script_run 'export PIN_ROOT=/usr/lib64/coverage-tools/pin-root';
 
     # install packages with debug info and wrap
     # targets that will be instrumented for 'coverage'
-    assert_script_run "mkdir -p \$LOG_DIR";
+    assert_script_run "mkdir -m 0777 -p \$LOG_DIR";
 
     # wrap the binaries
     assert_script_run "funkoverage wrap $_" for @{$test_data->{coverage_targets}};
