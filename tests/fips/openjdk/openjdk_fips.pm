@@ -21,6 +21,7 @@ use version_utils qw(is_sle is_sled is_rt is_sles4sap);
 use security::openjdk_utils qw(get_java_versions);
 
 
+# commented out code is not used, but kept for reference
 # sub get_java_versions {
 #     # on newer version we need legacy module for openjdk 11, but is not available
 #     # on SLERT/SLED, can't test openjdk 11. On 15-SP7 17 is also in legacy module
