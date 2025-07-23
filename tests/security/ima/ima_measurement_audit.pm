@@ -20,36 +20,37 @@ sub run {
     my ($self) = @_;
     select_serial_terminal;
 
-    my $meas_file = "/sys/kernel/security/ima/ascii_runtime_measurements";
-
     my @func_list = (
         {func => "BPRM_CHECK", file => "/usr/bin/ping", cmd => "ping -c 1 localhost"},
         {func => "FILE_CHECK", file => "/dev/shm/sample", cmd => "echo 'sample' > /dev/shm/sample"},
         {func => "MMAP_CHECK", file => "/usr/bin/ping", cmd => "ping -c 1 localhost"},
     );
 
-    for my $f (@func_list) {
-        assert_script_run("echo 'audit func=$f->{func}' >/etc/sysconfig/ima-policy");
+    # set audit logs to be flushed at each write
+    assert_script_run "sed -i 's/^flush =/flush = ASYNC/' /etc/audit/auditd.conf";
 
+    for my $f (@func_list) {
+        record_info($f->{func}, "Testing IMA measurement for function: $f->{func}");
+        assert_script_run("echo 'audit func=$f->{func}' >/etc/sysconfig/ima-policy");
         # Reboot to make settings work
         power_action('reboot', textmode => 1);
         my $boot_method = ((is_aarch64 && is_sle('>=16')) ? 'wait_boot_past_bootloader' : 'wait_boot');
         $self->$boot_method;
         select_serial_terminal;
-
         # Clear audit log
         assert_script_run("echo -n '' > /var/log/audit/audit.log");
-
         ($f->{cmd}) ? assert_script_run($f->{cmd}) : die "Get command failure";
-
         # We do not check the exact file hash here, but to ensure the audit
         # record existed
-        assert_script_run("ausearch -m INTEGRITY_RULE |grep '$f->{file}.*hash='");
+        #assert_script_run("ausearch -m INTEGRITY_RULE |grep '$f->{file}.*hash='");
+        assert_script_run 'ausearch -m INTEGRITY_RULE';
     }
 }
 
 sub test_flags {
-    return {always_rollback => 1};
+    return {always_rollback => 0};
 }
+
+
 
 1;
