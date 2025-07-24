@@ -27,7 +27,7 @@ sub run {
     );
 
     # set audit logs to be flushed at each write
-    assert_script_run "sed -i 's/flush = INCREMENTAL_ASYNC/flush = SYNC/' /etc/audit/auditd.conf";
+    assert_script_run "sed -i 's/flush = INCREMENTAL_ASYNC/flush = SYNC/;s/freq = 50/freq = 0/' /etc/audit/auditd.conf";
 
     for my $f (@func_list) {
         record_info($f->{func}, "Testing IMA measurement for function: $f->{func}");
