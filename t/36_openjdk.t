@@ -7,10 +7,10 @@ use List::Util qw(any none);
 use testapi;
 use security::openjdk_utils 'get_java_versions';
 
-#subtest '[dummy]' => sub {
-#    my $dummy = 3 + 3;
-#    ok($dummy == 6, 'check that 3+3 == 6 (setup works)');
-#};
+subtest '[dummy]' => sub {
+    my $dummy = 3 + 3;
+    ok($dummy == 6, 'check that 3+3 == 6 (setup works)');
+};
 
 
 subtest '[test for any SLE, no RT, no SLED]' => sub {
