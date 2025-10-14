@@ -13,6 +13,7 @@ schedule:
     - console/openvswitch_ssl
     - console/chrony
     - console/cups
+    - network/samba/samba_adcli    
     - console/curl_https
     - console/wget_https
     - console/w3m_https
