@@ -67,7 +67,7 @@ sub run {
 
     # sets up the environment for coverage
     assert_script_run 'export LOG_DIR=/var/coverage/data';
-    assert_script_run 'export PIN_ROOT=/usr/lib64/coverage-tools/';
+    assert_script_run 'export PIN_ROOT=/usr/lib64/coverage-tools/pin';
     assert_script_run "mkdir -m 0777 -p \$LOG_DIR";
 
     # wrap the binaries that will be instrumented for 'coverage'
