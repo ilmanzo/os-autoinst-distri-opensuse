@@ -75,6 +75,8 @@ sub run {
     record_info('Generate scan files');
     my @scan_steps = ('XCCDF', 'ARF', 'HTML');
     foreach my $step (@scan_steps) {
+        # if we get a warning dialog about remote resources, dismiss it
+        send_key 'ESC' if check_screen('scap-workbench-Diagnostics-Close', timeout => 30);
         assert_and_click('scap-workbench-Save-Results');
         assert_and_click("scap-workbench-Save-Results-$step");
         assert_and_click("scap-workbench-Save-Results-$step-Save");
@@ -84,6 +86,8 @@ sub run {
     record_info('Generate remediation files');
     my @remed_steps = ('bash', 'ansible', 'puppet');
     foreach my $step (@remed_steps) {
+        # if we get a warning dialog about remote resources, dismiss it
+        send_key 'ESC' if check_screen('scap-workbench-Diagnostics-Close', timeout => 30);
         assert_and_click('scap-workbench-Generate-remediation');
         assert_and_click("scap-workbench-Generate-remediation-$step");
         assert_and_click('scap-workbench-Generate-remediation-Save');
