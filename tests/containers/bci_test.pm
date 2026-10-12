@@ -12,13 +12,18 @@
 #   This module is used to test BCI repository and BCI container images.
 #   It makes the call to tox to run the different test environments defined
 #   in the variable BCI_TEST_ENVS.
+#   With BCI_PER_IMAGE_TESTS set, the tests of each environment are not run
+#   here but scheduled as one bci_image_test module per container image.
 # Maintainer: QE-C team <qa-c@suse.de>
 
 use Mojo::Base 'consoletest';
 use XML::LibXML;
+use Mojo::File 'path';
+use autotest;
 use testapi;
 use serial_terminal 'select_serial_terminal';
 use containers::utils qw(reset_container_network_if_needed);
+use containers::bci_utils;
 use File::Basename;
 use utils qw(systemctl);
 use version_utils qw(get_os_release check_version is_sle);
@@ -52,10 +57,39 @@ sub skip_testrun {
     return 0;
 }
 
-sub record_disk_usage {
-    my ($engine, $label) = @_;
-    my $out = script_output("df -h / 2>&1; echo ---; $engine system df 2>&1", proceed_on_failure => 1);
-    record_info("disk: $label", $out);
+# Schedule one bci_image_test module per container image tested in the tox environment $env.
+# Return false if there is nothing to schedule, so the caller can run the environment in one go.
+sub schedule_image_tests {
+    my ($self, $env, $engine) = @_;
+    my $bci_marker = get_var('BCI_IMAGE_MARKER');
+    my $collect_out = "collect_$env.txt";
+    my $cmd = "tox -e $env -- --collect-only -qqq";
+    $cmd .= " -k \"$bci_marker\"" if $bci_marker;
+    # tox creates its virtualenv here, which takes a while
+    script_run("$cmd > $collect_out 2>&1", timeout => 900);
+    script_run("rm -f junit_$env.xml");    # empty results of the collection, bci_logs would pick them up
+    my $upname = upload_logs($collect_out, failok => 1);
+    my @node_ids = ($upname && -f "ulogs/$upname") ? grep { m{^tests/\S+::} } split(/\n/, path("ulogs/$upname")->slurp) : ();
+    unless (@node_ids) {
+        record_info('Collect', "No tests collected for <tox -e $env>, running it in a single go");
+        return 0;
+    }
+
+    my @images = bci_group_by_image(@node_ids);
+    my %names;
+    for my $i (0 .. $#images) {
+        my ($image, $image_ids) = @{$images[$i]};
+        my $name = bci_module_name($env, $image);
+        $name .= "_$names{$name}" if $names{$name}++;
+        my $run_args = OpenQA::Test::RunArgs->new();
+        $run_args->{env} = $env;
+        $run_args->{engine} = $engine;
+        $run_args->{node_ids} = $image_ids;
+        $run_args->{last_of_env} = ($i == $#images);
+        autotest::loadtest('tests/containers/bci_image_test.pm', name => $name, run_args => $run_args);
+    }
+    record_info('Scheduled', scalar(@images) . " modules for <tox -e $env>");
+    return 1;
 }
 
 sub run_tox_cmd {
@@ -160,11 +194,18 @@ sub run {
     record_disk_usage($engine, 'before tests');
 
     # Run environment specific tests
+    my $merge_junit = 0;
     for my $env (split(/,/, $test_envs)) {
+        next if (get_var('BCI_PER_IMAGE_TESTS') && $self->schedule_image_tests($env, $engine));
+        $merge_junit = 1;
         $self->run_tox_cmd($env);
         record_disk_usage($engine, "after $env");
         script_run("$engine system prune -a -f", timeout => 300);
     }
+
+    # Only the environments run here leave results for bci_logs. Module order is fixed at scheduling
+    # time, so with BCI_PER_IMAGE_TESTS main_containers does not schedule it before the image modules.
+    autotest::loadtest('tests/containers/bci_logs.pm') if (get_var('BCI_PER_IMAGE_TESTS') && $merge_junit);
 
     assert_script_run('deactivate');
 
