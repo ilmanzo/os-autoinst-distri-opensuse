@@ -14,6 +14,7 @@
 use Mojo::Base 'consoletest';
 use testapi;
 use serial_terminal 'select_serial_terminal';
+use utils 'write_sut_file';
 use containers::bci_utils;
 
 sub run {
@@ -24,14 +25,17 @@ sub run {
     my $env = $args->{env};
     my $timeout = get_var('BCI_IMAGE_TIMEOUT', 900) * get_var('TIMEOUT_SCALE', 1);
     my $tox_out = "tox_$self->{name}.txt";
-    my $node_ids = join(' ', map { "'" . s/'/'\\''/gr . "'" } @{$args->{node_ids}});
+    my $ids_file = "/tmp/bci_ids_$self->{name}.txt";
 
+    # The node IDs of an image can be longer than the width of the serial terminal, which breaks typing the command
+    write_sut_file($ids_file, join("\n", @{$args->{node_ids}}) . "\n");
+    assert_script_run("mapfile -t node_ids < $ids_file");
     assert_script_run('cd /root/BCI-tests');
     assert_script_run('export USE_MACVLAN_DUMMY=1 TESTINFRA_LOGGING=1');
     # tox passes the extra arguments after the test file of the environment, so node IDs would not narrow the
     # run down to one image. Run pytest directly in the virtualenv that bci_test created with tox.
     # ponytail: assumes the default tox work directory, and misses changes of the pytest options in tox.ini
-    my $cmd = ".tox/$env/bin/python -m pytest -vv --pytest-container-log-level=debug " . bci_pytest_args() . " $node_ids";
+    my $cmd = ".tox/$env/bin/python -m pytest -vv --pytest-container-log-level=debug " . bci_pytest_args() . ' "${node_ids[@]}"';
     my $ret = script_run("timeout $timeout $cmd > $tox_out 2>&1", timeout => $timeout + 60);
 
     # The pytest summary is at the end of the log
@@ -46,7 +50,7 @@ sub run {
     }
     my $ret_xf = script_run("awk '/short test summary info/{f=1}f' $tox_out | grep XFAIL");
     record_info('Softfail', "The tests of <$env> have softfailures(XFAIL)", result => 'softfail') if ($ret_xf == 0);
-    script_run('rm -f commands-*.txt commands.tgz');
+    script_run("rm -f commands-*.txt commands.tgz $ids_file");
 
     if ($args->{last_of_env}) {
         record_disk_usage($args->{engine}, "after $env");
