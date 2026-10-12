@@ -38,8 +38,8 @@ sub run {
     my $cmd = ".tox/$env/bin/python -m pytest -vv --pytest-container-log-level=debug " . bci_pytest_args() . ' "${node_ids[@]}"';
     my $ret = script_run("timeout $timeout $cmd > $tox_out 2>&1", timeout => $timeout + 60);
 
-    # The pytest summary is at the end of the log
-    my $summary = script_output("grep -E '^(FAILED|ERROR) ' $tox_out; tail -n 1 $tox_out", proceed_on_failure => 1);
+    # The failed tests and the pytest summary line. script_output stops at the first failing command, so use one grep.
+    my $summary = script_output("grep -E '^(FAILED|ERROR) |^=+ .* in [0-9.]+s' $tox_out || true", proceed_on_failure => 1);
     record_info('pytest', $summary);
     # man timeout: If the command times out, and --preserve-status is not set, then exit with status 124.
     my $failure = $ret == 124 ? "pytest of <$env> timed out after $timeout seconds" : $ret != 0 ? "pytest of <$env> failed" : undef;
