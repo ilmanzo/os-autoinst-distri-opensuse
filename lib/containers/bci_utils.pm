@@ -11,9 +11,10 @@ package containers::bci_utils;
 use strict;
 use warnings;
 use Exporter 'import';
+use XML::LibXML;
 use testapi;
 
-our @EXPORT = qw(record_disk_usage bci_pytest_args bci_group_by_image bci_module_name);
+our @EXPORT = qw(record_disk_usage bci_pytest_args bci_image_of bci_group_by_image bci_module_name bci_junit_images);
 
 =head2 record_disk_usage
 
@@ -45,15 +46,32 @@ sub bci_pytest_args {
     return $cmd;
 }
 
+=head2 bci_image_of
+
+ bci_image_of($test_id);
+
+Return the container image tested by a pytest node ID, or the name of a test case
+of a JUnit report. It is the parameter of the test, without the C<local-> prefix that
+pytest-container adds to images derived from the tested one. Tests without a
+parameter return the empty string.
+
+=cut
+
+sub bci_image_of {
+    my ($id) = @_;
+    my ($image) = $id =~ /^[^\[]*\[(.*)\]$/;
+    $image //= '';
+    $image =~ s/^local-//;
+    return $image;
+}
+
 =head2 bci_group_by_image
 
  bci_group_by_image(@node_ids);
 
 Group the pytest node IDs, as printed by C<pytest --collect-only -q>, by the
 container image they test. Return a list of C<[$image, \@node_ids]> in the order
-of first appearance. The image is the parameter of the node ID without the
-C<local-> prefix that pytest-container adds to images derived from the tested one.
-Node IDs without a parameter are grouped under the empty image.
+of first appearance, see L</bci_image_of>.
 
 =cut
 
@@ -61,9 +79,7 @@ sub bci_group_by_image {
     my (@node_ids) = @_;
     my (@order, %groups);
     for my $id (@node_ids) {
-        my ($image) = $id =~ /^[^\[]*\[(.*)\]$/;
-        $image = '' unless defined $image;
-        $image =~ s/^local-//;
+        my $image = bci_image_of($id);
         push @order, $image unless $groups{$image};
         push @{$groups{$image}}, $id;
     }
@@ -84,6 +100,51 @@ sub bci_module_name {
     my ($name) = split(/ from /, $image, 2);
     $name //= '';
     return join('_', grep { length } map { s/[^\w.]+/_/gr } $env, $name);
+}
+
+=head2 bci_junit_images
+
+ bci_junit_images($junit_xml);
+
+Summarize the JUnit report of a bci-tests run by container image. Return a list of hashes, in
+the order the images first appear, with the keys C<title> (image and test counts), C<text> (one
+line per test case) and C<result> (C<fail> if a test failed, C<softfail> if a test is an expected
+failure, otherwise C<ok>). They can be passed to C<record_info>.
+
+=cut
+
+sub bci_junit_images {
+    my ($junit_xml) = @_;
+    my (@order, %cases);
+    for my $tc (XML::LibXML->load_xml(string => $junit_xml)->findnodes('//testcase')) {
+        my $image = bci_image_of($tc->getAttribute('name'));
+        my ($failure) = $tc->findnodes('./failure | ./error');
+        my ($skipped) = $tc->findnodes('./skipped');
+        my $status = 'passed';
+        $status = 'failed' if $failure;
+        $status = ($skipped->getAttribute('type') // '') eq 'pytest.xfail' ? 'xfailed' : 'skipped' if $skipped && !$failure;
+        my $message = ($failure // $skipped) ? ($failure // $skipped)->getAttribute('message') // '' : '';
+        push @order, $image unless $cases{$image};
+        # The image is in the title of the step, so keep only the test function, and tell the derived containers apart
+        my $name = $tc->getAttribute('name');
+        my ($test) = $name =~ /^([^\[]*)/;
+        $test .= ' [derived container]' if $name =~ /\[local-/;
+        push @{$cases{$image}}, {name => $test, time => $tc->getAttribute('time') // 0, status => $status, message => $message};
+    }
+
+    my @images;
+    for my $image (@order) {
+        my %count;
+        $count{$_->{status}}++ for @{$cases{$image}};
+        my ($name) = split(/ from /, $image, 2);
+        my @lines = map { sprintf("%-8s %s (%ss)", $_->{status}, $_->{name}, $_->{time}) . ($_->{status} =~ /^(failed|xfailed)$/ ? "\n         " . substr($_->{message}, 0, 300) : '') } @{$cases{$image}};
+        push @images, {
+            title => ($name || 'no image') . ': ' . join(', ', map { "$count{$_} $_" } grep { $count{$_} } qw(passed failed xfailed skipped)),
+            text => join("\n", @lines),
+            result => $count{failed} ? 'fail' : $count{xfailed} ? 'softfail' : 'ok',
+        };
+    }
+    return @images;
 }
 
 1;

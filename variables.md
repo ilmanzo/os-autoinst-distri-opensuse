@@ -38,6 +38,7 @@ BCI_TEST_ENVS | string | | The list of environments to be tested, e.g. `base,ini
 BCI_TESTS_REPO | string | https://github.com/SUSE/BCI-tests.git | If set, use this instead of the standart BCI-Test repo (see default). Uses the same syntax as CASE_DIR, so to use branch `branch123` on that repo use e.g. https://github.com/SUSE/BCI-tests#branch123
 BCI_TIMEOUT | string | | Timeout given to the command to test each environment. Used by `bci_test.pm`.
 BCI_PER_IMAGE_TESTS | boolean | false | Schedule the tests of each tox environment as one `bci_image_test.pm` module per container image, instead of running them in a single step of `bci_test.pm`. Environments without collectable tests still run in `bci_test.pm`. Meant for jobs with a single container engine.
+BCI_PER_IMAGE_STEPS | boolean | false | Add a step per container image, with its test results, to the results of `bci_test.pm` after each tox environment. The steps appear when the module ends. The XUnit results of `bci_logs.pm` are not affected.
 BCI_IMAGE_TIMEOUT | string | 900 | Timeout in seconds given to the tests of each container image. Used by `bci_image_test.pm`.
 BCI_TARGET | string | ibs-cr | Container project to be tested. `ibs-cr` is the CR project, `ibs` is the released images project
 BCI_PREPARE | boolean | false | Launch the bci_prepare step again. Useful to re-initialize the BCI-Test repo when using a different BCI_TESTS_REPO

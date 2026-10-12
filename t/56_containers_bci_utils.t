@@ -41,4 +41,29 @@ subtest '[bci_pytest_args] settings' => sub {
     is bci_pytest_args(), '-rfExX -n auto -k "registry" --reruns 1 --reruns-delay 2', 'marker and reruns from settings';
 };
 
+subtest '[bci_junit_images] summary by image' => sub {
+    my $xml = <<"XML";
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites><testsuite name="pytest" tests="5">
+<testcase classname="tests.test_all" name="test_os_release[tumbleweed:latest from $base/tumbleweed:latest]" time="1.5"/>
+<testcase classname="tests.test_all" name="test_lifecycle[tumbleweed:latest from $base/tumbleweed:latest]" time="0.001"><skipped type="pytest.skip" message="not for Tumbleweed">skipped</skipped></testcase>
+<testcase classname="tests.test_all" name="test_certs[local-tumbleweed:latest from $base/tumbleweed:latest]" time="30"><failure message="boom">trace</failure></testcase>
+<testcase classname="tests.test_all" name="test_os_release[bci/python:3.13 from $base/bci/python:3.13]" time="2"><skipped type="pytest.xfail" message="known issue">xfail</skipped></testcase>
+<testcase classname="tests.test_all" name="test_product[opensuse/pcp:6 from $base/pcp:6]" time="1"/>
+</testsuite></testsuites>
+XML
+    my @images = bci_junit_images($xml);
+
+    is scalar(@images), 3, 'one entry per image, derived containers merged';
+    is $images[0]{title}, 'tumbleweed:latest: 1 passed, 1 failed, 1 skipped', 'title with the counts';
+    is $images[0]{result}, 'fail', 'a failed test fails the image';
+    like $images[0]{text}, qr/^passed   test_os_release \(1.5s\)\n/, 'test function without the image';
+    like $images[0]{text}, qr/^failed   test_certs \[derived container\] \(30s\)\n\s+boom$/m, 'derived container and failure message';
+    unlike $images[0]{text}, qr/not for Tumbleweed/, 'no message for skipped tests';
+    is $images[1]{title}, 'bci/python:3.13: 1 xfailed', 'expected failure';
+    is $images[1]{result}, 'softfail', 'an expected failure is a softfail';
+    is $images[2]{result}, 'ok', 'all tests passed';
+    is_deeply [bci_junit_images('<testsuites/>')], [], 'no test cases';
+};
+
 done_testing;

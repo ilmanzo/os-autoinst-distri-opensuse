@@ -14,6 +14,8 @@
 #   in the variable BCI_TEST_ENVS.
 #   With BCI_PER_IMAGE_TESTS set, the tests of each environment are not run
 #   here but scheduled as one bci_image_test module per container image.
+#   With BCI_PER_IMAGE_STEPS set, a step per container image is added to the
+#   results of this module, after the run of each environment.
 # Maintainer: QE-C team <qa-c@suse.de>
 
 use Mojo::Base 'consoletest';
@@ -92,6 +94,17 @@ sub schedule_image_tests {
     return 1;
 }
 
+# Record one step per container image, from the JUnit results of the tox environment $env.
+sub record_image_steps {
+    my ($env) = @_;
+    my $upname = upload_logs("junit_$env.xml", failok => 1);
+    unless ($upname && -f "ulogs/$upname") {
+        record_info('Image steps', "No JUnit results of <tox -e $env> to show");
+        return;
+    }
+    record_info($_->{title}, $_->{text}, result => $_->{result}) for bci_junit_images(path("ulogs/$upname")->slurp);
+}
+
 sub run_tox_cmd {
     my ($self, $env) = @_;
     my $bci_marker = get_var('BCI_IMAGE_MARKER');
@@ -126,6 +139,7 @@ sub run_tox_cmd {
     my $cmd_xf = "awk '/short test summary info/{f=1}f' $tox_out | grep XFAIL";
     my $ret_xf = script_run("$cmd_xf", timeout => ($bci_timeout + 60));
     record_info('Softfail', "The command <tox -e $env> has softfailures(XFAIL)", result => 'softfail') if ($ret_xf == 0);
+    record_image_steps($env) if get_var('BCI_PER_IMAGE_STEPS');
     # Rename resulting junit file because it will be overwritten if we run
     # the same tox command later with another container engine. This way,
     # we will be able to parse the results for both container engines tox runs.
