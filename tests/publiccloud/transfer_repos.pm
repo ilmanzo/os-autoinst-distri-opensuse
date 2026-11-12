@@ -69,7 +69,7 @@ sub run {
     # * The --dirs (-d) option is implied whn --files-from is specified.
     # * The --archive (-a) option's behavior does not imply --recursive (-r) when --files-from is specified.
     # --recursive (-r), --update (-u), --archive (-a), --human-readable (-h), --rsh (-e)
-    script_retry("rsync --timeout=$timeout -ruahd -e ssh --files-from /tmp/transfer_repos.txt ~/repos/./ '$remote:$repodir'", timeout => $timeout + 10, retry => 3, delay => 120);
+    script_retry("rsync --timeout=$timeout -v --stats --info=progress2 -ruahd -e ssh --files-from /tmp/transfer_repos.txt ~/repos/./ '$remote:$repodir'", timeout => $timeout + 10, retry => 3, delay => 120);
 
     my $total_size = $instance->ssh_script_output(cmd => "du -hs $repodir");
     record_info("Repo size", "Total repositories size: $total_size");
